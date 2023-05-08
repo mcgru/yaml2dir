@@ -81,6 +81,10 @@ shows:
 https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
 ```
 
+## Depends on
+
+ gron  - tool to transform JSON into discrete, greppable assignments
+ python3, and its modules yaml,json
 
 
 ## Getting started
