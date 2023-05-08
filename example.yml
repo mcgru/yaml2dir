@@ -1,0 +1,68 @@
+#!/usr/bin/ansible-playbook
+
+---
+- name: plays gitlab-runner installation
+  hosts:
+    - "{{ host }}"
+##    - mipt-stage
+
+  vars:
+    lsb: "{{ansible_facts['distribution_release']}}"
+#### set ot up in group_vars or host_vars ###   USER: deployer
+
+  tasks:
+
+#  - name: "Register runner"
+#    community.general.gitlab_runner:
+#     api_url: https://gitlab.distant.global/
+##     api_token: "{{ access_token }}"
+#     registration_token: ************
+#     description: Runner on mipt-stage
+#     state: present
+#     active: true
+#     tag_list: ['mipt-stage','mipt-stage-runner']
+#     run_untagged: false
+#     locked: false
+
+  - name: Ensure user deployer exists
+    user:
+      name: "{{USER}}"
+      create_home: yes
+      generate_ssh_key: yes
+      ssh_key_type: ed25519
+
+  - name: Download gitlab-runner
+    get_url:
+      url:  https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+      dest: /usr/local/bin/gitlab-runner
+      mode: 0555
+
+### Give it permission to execute
+#sudo chmod +x /usr/local/bin/gitlab-runner
+
+### Create a GitLab Runner user
+#sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+#  -name: Create a GitLab Runner user
+
+### Install and run as a service
+#sudo gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
+#sudo gitlab-runner start
+
+  - name: Install and run as a service
+    shell: |
+      gitlab-runner install --user="{{USER}}" --working-directory="/home/{{USER}}"
+      systemctl restart gitlab-runner
+      gitlab-runner restart
+#|
+##      systemctl daemon-reload
+
+#      cmd: 
+#        - gitlab-runner install --user="{{USER}}" --working-directory="/home/{{USER}}"
+#        - systemctl daemon-reload
+#        - systemctl restart gitlab-runner
+#        - gitlab-runner restart
+##    ignore_errors: yes
+##    changed_when: false
+    args:
+      creates: /etc/systemd/system/gitlab-runner.service
+

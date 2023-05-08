@@ -1,5 +1,86 @@
 # yaml2dir
 
+## Examples
+
+We have source example.yml:
+
+```
+sed -r 's@#.*@@; /^\s*$/d' example.yml
+```
+that gives:
+
+```
+---
+- name: plays gitlab-runner installation
+  hosts:
+    - "{{ host }}"
+  vars:
+    lsb: "{{ansible_facts['distribution_release']}}"
+  tasks:
+  - name: Ensure user deployer exists
+    user:
+      name: "{{USER}}"
+      create_home: yes
+      generate_ssh_key: yes
+      ssh_key_type: ed25519
+  - name: Download gitlab-runner
+    get_url:
+      url:  https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+      dest: /usr/local/bin/gitlab-runner
+      mode: 0555
+  - name: Install and run as a service
+    shell: |
+      gitlab-runner install --user="{{USER}}" --working-directory="/home/{{USER}}"
+      systemctl restart gitlab-runner
+      gitlab-runner restart
+    args:
+      creates: /etc/systemd/system/gitlab-runner.service
+```
+
+After run
+```
+./yaml2dir.sh example.yml
+```
+
+we got example.yml.dir with a tree:
+
+```
+example.yml.dir
+└── root.0
+    ├── hosts.0
+    ├── name
+    ├── tasks.0
+    │   ├── name
+    │   └── user
+    │       ├── create_home
+    │       ├── generate_ssh_key
+    │       ├── name
+    │       └── ssh_key_type
+    ├── tasks.1
+    │   ├── get_url
+    │   │   ├── dest
+    │   │   ├── mode
+    │   │   └── url
+    │   └── name
+    ├── tasks.2
+    │   ├── args
+    │   │   └── creates
+    │   ├── name
+    │   └── shell
+    └── vars
+        └── lsb
+```
+
+and 
+```
+cat example.yml.dir/root.0/tasks.1/get_url/url
+```
+
+shows:
+```
+https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+```
+
 
 
 ## Getting started
